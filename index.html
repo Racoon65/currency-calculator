@@ -193,10 +193,13 @@
   /* График */
   .chart-card { display: flex; flex-direction: column; gap: 14px; }
   .chart-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px 16px; flex-wrap: wrap; }
-  .readout { min-width: 0; }
+  /* Ширина блока не зависит от текста, иначе при наведении переносились бы кнопки периода */
+  .readout { flex: 1 1 200px; min-width: 0; }
+  .controls { flex: none; }
   .pair { font-family: var(--mono); font-size: .92rem; color: var(--muted); }
   .big { font-family: var(--mono); font-size: 1.9rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; }
-  .sub { font-size: .88rem; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 1.3em; }
+  .sub { font-size: .88rem; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 1.3em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .big { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub .chg-big { font-family: var(--mono); font-weight: 500; margin-right: 8px; }
   .controls { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
   .toggle { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
@@ -214,7 +217,8 @@
   .legend .chip { color: var(--text); }
   .legend .sw { width: 16px; height: 3px; border-radius: 2px; background: var(--faint); }
   .legend .chip.on .sw { background: var(--accent); height: 4px; }
-  .legend .pv { color: var(--muted); }
+  /* Место под процент фиксированной ширины: подписи не прыгают и не переносятся при наведении */
+  .legend .pv { color: var(--muted); display: inline-block; min-width: 7ch; text-align: right; font-variant-numeric: tabular-nums; }
   .chart-box { position: relative; height: 280px; min-height: 280px; flex: 1 1 auto; }
   @media (max-width: 899px) { .chart-box { flex: none; } }
   @media (max-width: 480px) { .chart-box { height: 230px; min-height: 230px; } }
@@ -856,7 +860,9 @@
     el('path', { d, fill: 'none', stroke: C.line, 'stroke-width': 3, 'stroke-linecap': 'round', class: 'skel' });
   }
 
-  function renderChart() {
+  // keepHover: при перерисовке из-за смены размера сохраняем выбранную точку
+  function renderChart(keepHover) {
+    const keep = keepHover === true ? hoverIdx : null;
     while (svg.firstChild) svg.removeChild(svg.firstChild);
     geo = null; hoverIdx = null;
     const compare = state.mode === 'compare';
@@ -883,6 +889,7 @@
     }
     msg.hidden = true;
     if (compare) drawCompare(w, W, H); else drawPair(w, W, H, mult);
+    if (keep !== null && geo && keep < geo.n) hoverIdx = keep;
     readout();
   }
 
@@ -993,10 +1000,8 @@
   function readout() {
     if (!geo) return;
     const i = hoverIdx === null ? geo.n - 1 : hoverIdx, per = periodObj();
-    const startTxt = fmtDate(geo.dates[0], geo.longP ? 'shortY' : 'short');
-    const when = hoverIdx === null ? per.text
-      : i === 0 ? 'на ' + fmtDate(geo.dates[0], 'long')
-      : 'с ' + startTxt + ' по ' + fmtDate(geo.dates[i], 'long');
+    // При наведении: изменение от начала периода и дата точки. Коротко, чтобы строка не переносилась
+    const when = hoverIdx === null ? per.text : 'на ' + fmtDate(geo.dates[i], 'shortY');
     if (geo.mode === 'pair') {
       const v = geo.vals[i];
       $('c-value').textContent = fmtRate(v, geo.dec) + ' ' + byCode(state.to).sym;
@@ -1134,7 +1139,7 @@
   let lastSize = '';
   const ro = new ResizeObserver(() => {
     const b = $('chart-box'), s = b.clientWidth + 'x' + b.clientHeight;
-    if (s !== lastSize) { lastSize = s; renderChart(); }
+    if (s !== lastSize) { lastSize = s; renderChart(true); }
     fit(inFrom); fit(inTo);
   });
 
