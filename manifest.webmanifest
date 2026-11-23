@@ -1,0 +1,16 @@
+{
+  "name": "Калькулятор валют",
+  "short_name": "Валюты",
+  "description": "Франк, евро, доллар, рубль и сум: пересчёт по официальным курсам и график курса.",
+  "lang": "ru",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#2a2c30",
+  "theme_color": "#2a2c30",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
